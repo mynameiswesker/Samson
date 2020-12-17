@@ -53,7 +53,40 @@
         return 'совпадений меньше 2';//совпадения
     }
 
-    var_dump(convertString('acdecdecde','cde'));
+//   var_dump(convertString('acdecdecde','cde'));
+
+
+    //Подзадание №2/////////////////////////////////////////////////////////
+      $arr = [
+        ['a'=>9,'b'=>1],
+        ['a'=>15,'b'=>3],
+        ['a'=>11,'b'=>2],
+        ['a'=>12,'b'=>4],
+        ['a'=>13,'b'=>10]
+    ];
+
+   function mySortForKey($a,$b){
+
+        for($i=0; $i<count($a); $i++){
+            try {
+                if(!array_key_exists($b,$a[$i])){
+                   throw new Exception("Ошибка, ключ {$b} в массиве с индексом $i не найден");
+                }
+            } catch (Exception $e) {
+                return $e->getMessage();
+                die();
+            }
+        }
+
+        usort($a, function($array_a,$array_b) use($b){
+            return($array_a[$b] - $array_b[$b]);
+        });
+
+        return $a;
+
+   }
+
+   //var_dump(mySortForKey($arr,"b"));
 
 
     ?>
