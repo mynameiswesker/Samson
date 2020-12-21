@@ -88,6 +88,80 @@
 
    //var_dump(mySortForKey($arr,"b"));
 
+//Подзадание №3////////////////////////////////////////
+
+   function importXml($a){
+    $xml = simplexml_load_file($a);
+
+    $host = 'localhost';
+    $user = 'root';
+    $password = 'root';
+    $db_name = 'test_samson';
+
+    $link = mysqli_connect($host, $user, $password, $db_name)
+        or die(mysqli_error($link));
+    
+    foreach($xml->{'Товар'} as $product){//Название товара и его код -> таблица a_product
+        //echo $product['Код']." ".$product["Название"]."</br>";
+
+        $code = $product['Код'];//код продукта
+        $name_product = $product["Название"];//название продукта
+
+        $query = "INSERT INTO `a_product` (`id`, `code`, `name`) VALUES (NULL, '$code', '$name_product')";//записали в таблицу a_product
+        
+        $result = mysqli_query($link,$query)
+            or die(mysqli_error($link));
+
+            $ID = $link->insert_id;//id созданного продукта в таблице a_product
+
+        foreach($product->{'Цена'} as $price){//Цена товара и его тип -> таблица a_price
+            //echo $price." ".$price['Тип']."</br>";
+
+            $price_product = $price;//цена товара
+            $type_price = $price['Тип'];//тип цены
+
+            $query = "INSERT INTO `a_price` (`id_product`, `type_price`, `price`) VALUES ('$ID', '$type_price', '$price_product')";//записали в таблицу a_price
+        
+            $result = mysqli_query($link,$query)
+                or die(mysqli_error($link));
+        }
+
+        foreach ($product->{'Свойства'} as $property) {//название свойства и его значение -> a_property
+            foreach($property as $val){
+
+                $value_property = $val;//значение свойства
+                $name_property = $val->getName();//название свойства
+
+                //echo $name_property." : ".$value_property."</br>";
+
+                $query = "INSERT INTO `a_property` (`id_product`, `name`, `value`) VALUES ('$ID', '$name_property', '$value_property')";//записали в таблицу a_property
+        
+                $result = mysqli_query($link,$query)
+                    or die(mysqli_error($link));
+            }
+        }
+
+        foreach ($product->{'Разделы'} as $category) {//название категории и код продукта -> a_category
+            foreach($category as $val_category){
+                //echo $val_category."</br>";
+
+                $name_category = $val_category;//название категории
+                //$code -> код продукта
+
+                $query = "INSERT INTO `a_category` (`id`, `code`, `name`) VALUES ('$ID', '$code', '$name_category')";//записали в таблицу a_category
+        
+                $result = mysqli_query($link,$query)
+                    or die(mysqli_error($link));
+            }
+        }
+    }
+
+    mysqli_close($link);
+
+}
+
+//importXml('file.xml');
+
 
     ?>
 </body>
