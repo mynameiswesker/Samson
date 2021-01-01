@@ -162,6 +162,132 @@
 
 //importXml('file.xml');
 
+//реализация функции exportXML($a,$b)
+
+function exportXML($a,$b){
+
+    //Данные для коннекта к БД
+    $host = 'localhost';////////
+    $user = 'root';/////////////
+    $password = 'root';/////////
+    $db_name = 'test_samson';///
+    ////////////////////////////
+
+    //Данные полученные с БД
+    $id = 0;//id продукта всегда 1///////////////////////////////////////////////////////////////////
+    $name_product = '';//////////////////////////////////////////////////////////////////////////////
+    $name_category = [];//содержимое тега <Раздел> мб несколько//////////////////////////////////////
+    $name_and_value_property = [];//название свойств и их значения для данного кода раздела//////////
+    $price_and_typePrice = [];//Данные о цене и типах цены по данному коду раздела///////////////////
+    /////////////////////////////////////////////////////////////////////////////////////////////////
+    
+    $link = mysqli_connect($host, $user, $password, $db_name)
+        or die(mysqli_error($link));
+
+    //получаем данные таблицы a_category
+    $query_category = "SELECT * FROM a_category WHERE code = '$b' ";
+
+    $result_category = mysqli_query($link,$query_category)
+        or die(mysqli_error($link));
+
+    if($result_category->num_rows >0){
+        while($row = $result_category->fetch_assoc()){
+            //var_dump($row);//вывел данные
+            $id = $row['id'];//найденный id записал в константу
+            array_push($name_category,$row['name']);//записали в константу содержимое тегов раздел для данного id
+        }
+    }
+    
+    //получаем данные таблицы a_property
+    $query_property = "SELECT * FROM a_property WHERE id_product = '$id' ";
+
+    $result_property = mysqli_query($link,$query_property)
+        or die(mysqli_error($link));
+
+    if($result_property->num_rows >0){
+        while($row = $result_property->fetch_assoc()){
+            //var_dump($row);//вывел данные
+            array_push($name_and_value_property,['name'=>$row['name'],'value'=>$row['value']]);//записал данные в константу
+        }
+    }
+
+    //получаем данные таблицы a_price
+    $query_price = "SELECT * FROM a_price WHERE id_product = '$id' ";
+
+    $result_price = mysqli_query($link,$query_price)
+        or die(mysqli_error($link));
+
+    if($result_price->num_rows >0){
+        while($row = $result_price->fetch_assoc()){
+            //var_dump($row);//вывел данные
+            array_push($price_and_typePrice,['type_price'=>$row['type_price'],'price'=>$row['price']]);//записал данные в константу
+        }
+    }
+    
+    //получаем данные таблицы a_product
+    $query_product = "SELECT * FROM a_product WHERE id = '$id' ";
+
+    $result_product = mysqli_query($link,$query_product)
+        or die(mysqli_error($link));
+
+    if($result_product->num_rows >0){
+        while($row = $result_product->fetch_assoc()){
+            //var_dump($row);//вывел данные
+            $name_product = $row['name'];
+        }
+    }
+    
+    mysqli_close($link);
+
+//Создание xml и его экспорт в файл $a.xml
+
+    $dom = new DOMDocument();
+    $dom->load($a);
+    $Products = $dom->getElementsByTagname('Товары');
+
+    //Создаем тег <Товар>
+    $product = $dom->createElement('Товар');
+    $product->setAttribute('Код',$b);
+    $product->setAttribute('Название',$name_product);
+
+    //Создаем Тег <Цена>
+    foreach($price_and_typePrice as $info_price){
+        $price = $dom->createElement('Цена',$info_price['price']);
+        $price->setAttribute('Тип',$info_price['type_price']);
+        $product->appendChild($price);
+    }
+    unset($info_price);
+
+    //Создаем Тег <Свойства>
+    $property = $dom->createElement('Свойства');
+
+    //Создаем тег названия_свойства и его хар-ки в теге Свойства
+    foreach($name_and_value_property as $info_property){
+        $name_prop = $dom->createElement($info_property['name'],$info_property['value']);
+        $property->appendChild($name_prop);
+    }
+    unset($info_property);
+
+    //Создаем Тег <Разделы>
+    $categ = $dom->createElement('Разделы');
+
+    //Создаем тег <Раздел> и его хар-ки в теге Разделы
+    foreach($name_category as $name){
+        $name_categ = $dom->createElement('Раздел',$name);
+        $categ->appendChild($name_categ);
+    }
+    unset($name);
+    
+    $Products->item(0)->appendChild($product);//вставили тег <Товар> в тег <Товары>
+    $dom->getElementsByTagname('Товар')->item(0)->appendChild($property);//Вставили тег <Свойства> в тег <Товар>
+    $dom->getElementsByTagname('Товар')->item(0)->appendChild($categ);//Вставили тег <Разделы> в тег <Товар>
+
+    $dom->save($a);
+
+}
+
+//exportXML('$a.xml',302);//Пример выполнения
+
 
     ?>
 </body>
